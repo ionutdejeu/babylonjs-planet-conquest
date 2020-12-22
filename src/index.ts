@@ -4,7 +4,7 @@ import { HemisphericLight, Vector3, MeshBuilder, PBRMetallicRoughnessMaterial, C
 import { createEngine, createScene, createPBRSkybox, createArcRotateCamera, camera } from './babylon'
 import { createMenu } from './menu'
 import { createLevel } from './battlefield';
-
+import {SetupAttackBehavior} from './attack';
 // Import stylesheets
 // import './index.css';
 
@@ -20,7 +20,7 @@ const main = async () => {
   
   createMenu(scene);
   createLevel(scene,gameCamera);
- 
+  SetupAttackBehavior(scene);
   
 
   // Start the scene

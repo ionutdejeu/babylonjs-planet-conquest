@@ -1,28 +1,46 @@
 import * as BABYLON from '@babylonjs/core';
-import { Vector3 } from 'babylonjs';
+import {GameEvent, OnAttackTargetChosen} from './combat_events';
+import { start } from 'repl';
 
+let dragStarted:boolean = false;
 let startingPoint:BABYLON.Vector3|undefined; 
+let startingMesh:BABYLON.Mesh;
+
 let light1:BABYLON.PointLight,light2:BABYLON.PointLight,light3:BABYLON.PointLight;
 let planets:Array<BABYLON.Mesh> = [];
 let ground:BABYLON.Mesh,groundMaterial:BABYLON.StandardMaterial;
+let directionIndicator:BABYLON.Mesh;
 let directionIndicators = [];
 let directionIndicatorsPaths:Array<Array<BABYLON.Vector3>>= [];
+
 
 const planetPrepareActions =(mesh:BABYLON.Mesh,scene:BABYLON.Scene)=>{
     // for now only inlitialize the prepare actions 
     mesh.actionManager = new BABYLON.ActionManager(scene);
-}   
-export const createCombatAssets=(scene:BABYLON.Scene,camera:BABYLON.ArcRotateCamera)=>{
-    let dirIndicator = [];
-    dirIndicator.push(BABYLON.Vector3.Zero(),BABYLON.Vector3.Zero());
-    directionIndicators.push(BABYLON.MeshBuilder.CreateLines("directionIndicatorLine", {points: dirIndicator,updatable:true}, scene));
 }
 
-export const createDirectionIndicators=(scene:BABYLON.Scene,origin:BABYLON.Vector3,target:BABYLON.Vector3)=>{
-    let dirIndicator = [];
-    dirIndicator.push(origin,target);
-    directionIndicators[0] = BABYLON.MeshBuilder.CreateLines("directionIndicatorLine", {points: dirIndicator,updatable:true}, scene);
+export const createCombatAssets=(scene:BABYLON.Scene,camera:BABYLON.ArcRotateCamera)=>{
+
+    directionIndicatorsPaths.push([BABYLON.Vector3.Zero(),BABYLON.Vector3.Zero()]);
+    directionIndicator = BABYLON.MeshBuilder.CreateLines("directionIndicatorSingleton", {points: directionIndicatorsPaths[0],updatable:true}, scene);
+    directionIndicator.isVisible = false;
+    //directionIndicators.push(BABYLON.MeshBuilder.CreateLines("directionIndicatorLine", {points: dirIndicator,updatable:true}, scene));
 }
+
+export const updateDirectionalIndicators=(scene:BABYLON.Scene,origin:BABYLON.Vector3,target:BABYLON.Vector3)=>{
+    let vertData = directionIndicator.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+    if(vertData!==null) {
+        vertData[0] = origin.x;
+        vertData[1] = origin.y;
+        vertData[2] = origin.z;
+        vertData[3] = target.x;
+        vertData[4] = target.y;
+        vertData[5] = target.z;
+        directionIndicator.updateVerticesData(BABYLON.VertexBuffer.PositionKind, vertData);
+    }
+}
+
+
 
 const planetHightlightAction =(mesh:BABYLON.Mesh)=>{
     mesh.actionManager?.registerAction(new BABYLON.SetValueAction(BABYLON.ActionManager.OnPointerOutTrigger, mesh.material, "emissiveColor", ((mesh.material) as BABYLON.StandardMaterial).emissiveColor));
@@ -33,7 +51,7 @@ const planetHightlightAction =(mesh:BABYLON.Mesh)=>{
 
 const getGroundPostion=(scene:BABYLON.Scene):BABYLON.PickingInfo|null=>{
     let pickInfo = scene.pick(scene.pointerX,scene.pointerY,(mesh:BABYLON.AbstractMesh)=>{
-        return mesh.id == ground.id
+        return mesh.id === ground.id
     });
     if(pickInfo) return pickInfo;
     return null;
@@ -43,16 +61,19 @@ const onCanvasPointerDown=(scene:BABYLON.Scene,camera:BABYLON.ArcRotateCamera,ev
     if(evt.button!==0){
         return;
     }
-    if(pickInfo.pickedMesh?.id != ground.id){
+    if(pickInfo.pickedMesh?.id !== ground.id){
         let groundPos = getGroundPostion(scene);
-        console.log('Picked mesh',pickInfo.pickedMesh?.name,'ground pos',groundPos?.hit);
+        
         
         if(groundPos?.hit){
+            dragStarted = true;
+            directionIndicator.isVisible = true;
             startingPoint = groundPos.pickedPoint?.clone();
-            if(pickInfo.pickedMesh && groundPos.pickedPoint)
-                createDirectionIndicators(scene,pickInfo.pickedMesh.position,groundPos.pickedPoint);
+            if(pickInfo.pickedMesh !== null){
+                startingMesh = pickInfo.pickedMesh as BABYLON.Mesh;
+            }
             let ctrl = scene.getEngine().getInputElement();
-            if (ctrl != null) camera.detachControl(ctrl);
+            if (ctrl !== null) camera.detachControl(ctrl);
         }
         else{
             startingPoint = undefined;
@@ -60,10 +81,29 @@ const onCanvasPointerDown=(scene:BABYLON.Scene,camera:BABYLON.ArcRotateCamera,ev
     }
 }
 
-const onCanvasPointerUp=(scene:BABYLON.Scene,camera:BABYLON.ArcRotateCamera)=>{
-    if(startingPoint!==undefined){
+const onCanvasPointerUp=(scene:BABYLON.Scene,camera:BABYLON.ArcRotateCamera,
+    evt:PointerEvent, 
+    pickInfo:BABYLON.Nullable<BABYLON.PickingInfo>)=>{
+    if(dragStarted === true && startingPoint!==undefined){
         let ctrl = scene.getEngine().getInputElement();
-        if (ctrl != null) camera.attachControl(ctrl);
+        if (ctrl !== null) camera.attachControl(ctrl);
+        dragStarted = false;
+        directionIndicator.isVisible = false;
+        if(pickInfo!=null && 
+            pickInfo.pickedMesh?.id !== ground.id && 
+            pickInfo.pickedMesh!=null){
+            OnAttackTargetChosen.notifyObservers(new GameEvent(scene,camera,startingMesh,(pickInfo.pickedMesh as BABYLON.Mesh)));
+        }
+         
+    }
+}
+
+const onCanvasPointerMove = (scene:BABYLON.Scene,camera:BABYLON.ArcRotateCamera,evt:PointerEvent, pickInfo:BABYLON.PickingInfo)=>{
+    if(dragStarted===true && startingPoint!==undefined){
+        let groundPos = getGroundPostion(scene);
+        
+        if(groundPos?.pickedPoint!==null && groundPos?.pickedPoint!==undefined)
+            updateDirectionalIndicators(scene,startingPoint,groundPos?.pickedPoint)
     }
 }
 
@@ -92,7 +132,7 @@ export const createLevel = function (scene:BABYLON.Scene,camera:BABYLON.ArcRotat
     ground.freezeNormals();
 
     // Boxes
-    var redBox = BABYLON.Mesh.CreateBox("red", 20, scene);
+    var redBox = BABYLON.Mesh.CreateBox("red", 15, scene);
     var redMat = new BABYLON.StandardMaterial("ground", scene);
     redMat.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4);
     redMat.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
@@ -101,7 +141,7 @@ export const createLevel = function (scene:BABYLON.Scene,camera:BABYLON.ArcRotat
     redBox.position.x -= 100;
     planets.push(redBox);
 
-    var greenBox = BABYLON.Mesh.CreateBox("green", 20, scene);
+    var greenBox = BABYLON.Mesh.CreateBox("green", 15, scene);
     var greenMat = new BABYLON.StandardMaterial("ground", scene);
     greenMat.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4);
     greenMat.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
@@ -110,7 +150,7 @@ export const createLevel = function (scene:BABYLON.Scene,camera:BABYLON.ArcRotat
     greenBox.position.z -= 100;
     planets.push(greenBox);
 
-    var blueBox = BABYLON.Mesh.CreateBox("blue", 20, scene);
+    var blueBox = BABYLON.Mesh.CreateBox("blue", 15, scene);
     var blueMat = new BABYLON.StandardMaterial("ground", scene);
     blueMat.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4);
     blueMat.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
@@ -120,7 +160,7 @@ export const createLevel = function (scene:BABYLON.Scene,camera:BABYLON.ArcRotat
     planets.push(blueBox);
 
     // Sphere
-    var sphere = BABYLON.Mesh.CreateSphere("sphere", 16, 20, scene);
+    var sphere = BABYLON.Mesh.CreateSphere("sphere", 6, 5, scene);
     var sphereMat = new BABYLON.StandardMaterial("ground", scene);
     sphereMat.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4);
     sphereMat.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
@@ -141,6 +181,9 @@ export const createLevel = function (scene:BABYLON.Scene,camera:BABYLON.ArcRotat
         onCanvasPointerDown(scene,camera,evt,pickInfo);
     };
     scene.onPointerUp = (evt:PointerEvent,pickInfo:BABYLON.Nullable<BABYLON.PickingInfo>)=>{
-        onCanvasPointerUp(scene,camera);
+        onCanvasPointerUp(scene,camera,evt,pickInfo);
+    };
+    scene.onPointerMove = (evt:PointerEvent,pickInfo:BABYLON.PickingInfo,type:BABYLON.PointerEventTypes)=>{
+        onCanvasPointerMove(scene,camera,evt,pickInfo);
     };
 }
