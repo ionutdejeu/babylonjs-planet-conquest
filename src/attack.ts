@@ -95,10 +95,11 @@ export class PlanetAttackEvent
 }
 
 const onAttackTargetChosenCallback=(evt:GameEvent,evtState:BABYLON.EventState)=>{
-    let middlePoint = BABYLON.Vector3.Lerp(evt.source.position,evt.source.position,0.5);
+    let middlePoint = BABYLON.Vector3.Lerp(evt.source.position,evt.target.position,0.5);
     //evt.scene.onBeforeRenderObservable.add
-    middlePoint=middlePoint.add(new BABYLON.Vector3(0,40,0));
-     
+    middlePoint=middlePoint.add(BABYLON.Axis.Y.scale(BABYLON.Vector3.Distance(evt.source.position,evt.target.position)/2));
+    //let handlepointMesh=BABYLON.Mesh.CreateBox("curverHandlePoint"+evt.source.name, 5, scene);
+    //handlepointMesh.position = middlePoint;
     let newPlannetAttack = new PlanetAttackEvent( evt,
     BABYLON.Curve3.CreateQuadraticBezier(evt.source.position,middlePoint, evt.target.position,10),
     1,

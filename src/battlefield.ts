@@ -1,6 +1,8 @@
 import * as BABYLON from '@babylonjs/core';
 import {GameEvent, OnAttackTargetChosen} from './combat_events';
 import { start } from 'repl';
+import grid_png from './textures/grid-png.png'
+
 
 let dragStarted:boolean = false;
 let startingPoint:BABYLON.Vector3|undefined; 
@@ -125,15 +127,22 @@ export const createLevel = function (scene:BABYLON.Scene,camera:BABYLON.ArcRotat
 
     // Ground
     ground = BABYLON.Mesh.CreateGround("ground", 1000, 1000, 1, scene, false);
+    let groundTexture = new BABYLON.Texture(grid_png, scene);
     groundMaterial = new BABYLON.StandardMaterial("ground", scene);
-    groundMaterial.specularColor = BABYLON.Color3.Black();
+    //groundMaterial.specularColor = BABYLON.Color3.Black();
+    groundTexture.hasAlpha = true;
+    groundMaterial.diffuseTexture = groundTexture;
+    groundMaterial.alpha = 0.5;
+    groundMaterial.useAlphaFromDiffuseTexture = true;
     ground.material = groundMaterial;
+    
+
     ground.freezeWorldMatrix();
     ground.freezeNormals();
 
     // Boxes
     var redBox = BABYLON.Mesh.CreateBox("red", 15, scene);
-    var redMat = new BABYLON.StandardMaterial("ground", scene);
+    var redMat = new BABYLON.StandardMaterial("red_material", scene);
     redMat.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4);
     redMat.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
     redMat.emissiveColor = BABYLON.Color3.Red();
@@ -142,7 +151,7 @@ export const createLevel = function (scene:BABYLON.Scene,camera:BABYLON.ArcRotat
     planets.push(redBox);
 
     var greenBox = BABYLON.Mesh.CreateBox("green", 15, scene);
-    var greenMat = new BABYLON.StandardMaterial("ground", scene);
+    var greenMat = new BABYLON.StandardMaterial("green_material", scene);
     greenMat.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4);
     greenMat.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
     greenMat.emissiveColor = BABYLON.Color3.Green();
@@ -151,7 +160,7 @@ export const createLevel = function (scene:BABYLON.Scene,camera:BABYLON.ArcRotat
     planets.push(greenBox);
 
     var blueBox = BABYLON.Mesh.CreateBox("blue", 15, scene);
-    var blueMat = new BABYLON.StandardMaterial("ground", scene);
+    var blueMat = new BABYLON.StandardMaterial("blue_material", scene);
     blueMat.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4);
     blueMat.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
     blueMat.emissiveColor = BABYLON.Color3.Blue();
@@ -161,7 +170,7 @@ export const createLevel = function (scene:BABYLON.Scene,camera:BABYLON.ArcRotat
 
     // Sphere
     var sphere = BABYLON.Mesh.CreateSphere("sphere", 6, 5, scene);
-    var sphereMat = new BABYLON.StandardMaterial("ground", scene);
+    var sphereMat = new BABYLON.StandardMaterial("sphere_material", scene);
     sphereMat.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4);
     sphereMat.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
     sphereMat.emissiveColor = BABYLON.Color3.Purple();
