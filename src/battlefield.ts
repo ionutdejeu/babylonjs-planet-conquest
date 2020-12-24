@@ -1,7 +1,7 @@
 import * as BABYLON from '@babylonjs/core';
 import {GameEvent, OnAttackTargetChosen} from './combat_events';
 import { start } from 'repl';
-import grid_png from './textures/grid-png.png'
+import {grid_png} from './textures/texture_loader';
 
 
 let dragStarted:boolean = false;
