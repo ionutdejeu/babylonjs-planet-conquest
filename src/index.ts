@@ -1,6 +1,5 @@
 import 'pepjs'
 
-import { HemisphericLight, Vector3, MeshBuilder, PBRMetallicRoughnessMaterial, Color3, SceneLoader } from '@babylonjs/core'
 import { createEngine, createScene, createPBRSkybox, createArcRotateCamera,createSpaceSkypox, camera } from './babylon'
 import { createMenu } from './menu'
 import { createLevel } from './battlefield';
@@ -15,11 +14,11 @@ let gameCamera;
 // main function that is async so we can call the scene manager with await
 const main = async () => {
 
-  //createPBRSkybox()
-  createSpaceSkypox()
+  createPBRSkybox()
+  //createSpaceSkypox()
   gameCamera= createArcRotateCamera()
   
-  createMenu(scene);
+  //createMenu(scene);
   createLevel(scene,gameCamera);
   SetupAttackBehavior(scene);
   

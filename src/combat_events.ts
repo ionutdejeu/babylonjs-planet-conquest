@@ -1,4 +1,4 @@
-import * as BABYLON from '@babylonjs/core';
+import * as BABYLON from 'babylonjs';
 
 export const GameEvents = {
     LEVEL_LOADED_COMPLETED: "LEVEL_LOADED_COMPLETED",
@@ -21,5 +21,10 @@ export class GameEvent{
         this.camera = camera;
     }
 }  
-let OnAttackTargetChosen:BABYLON.Observable<GameEvent> = new BABYLON.Observable<GameEvent>();
-export {OnAttackTargetChosen};
+let OnAttackTargetChosen:BABYLON.Observable<GameEvent>;
+export const CombatEventsDispatcher = ()=>{
+    if(OnAttackTargetChosen === undefined || OnAttackTargetChosen === null ){
+        OnAttackTargetChosen = new BABYLON.Observable<GameEvent>();
+    }
+    return OnAttackTargetChosen
+} 

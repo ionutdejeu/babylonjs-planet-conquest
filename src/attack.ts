@@ -1,6 +1,6 @@
-import {OnAttackTargetChosen,GameEvent} from './combat_events';
-import * as BABYLON from '@babylonjs/core';
-import { time, timeStamp } from 'console';
+import {CombatEventsDispatcher,GameEvent} from './combat_events';
+import * as BABYLON from 'babylonjs';
+import * as GUI from 'babylonjs-gui';
 import { scene } from './babylon';
  
 let battleShipModel:BABYLON.Mesh;
@@ -109,7 +109,7 @@ const onAttackTargetChosenCallback=(evt:GameEvent,evtState:BABYLON.EventState)=>
 }
 
 export const SetupAttackBehavior = (scene:BABYLON.Scene)=>{
-    OnAttackTargetChosen.add(onAttackTargetChosenCallback);
+    CombatEventsDispatcher().add(onAttackTargetChosenCallback);
     var redMat = new BABYLON.StandardMaterial("ground", scene);
     redMat.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4);
     redMat.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);

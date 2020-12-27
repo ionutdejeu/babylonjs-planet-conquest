@@ -1,10 +1,10 @@
-import * as BABYLON from '@babylonjs/core';
-import * as GUI from '@babylonjs/gui';
+import * as BABYLON from 'babylonjs';
+import * as GUI from 'babylonjs-gui';
 
- 
 export let menuCtrl:GUI.AdvancedDynamicTexture;
 export let menuButtonPlay:GUI.Button;
 export let menuOptionsBtn:GUI.Button;
+
 let uiGrid;
 
 

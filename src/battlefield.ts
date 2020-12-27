@@ -1,7 +1,6 @@
-import * as BABYLON from '@babylonjs/core';
-import {GameEvent, OnAttackTargetChosen} from './combat_events';
-import { start } from 'repl';
-import {grid_png} from './textures/texture_loader';
+import * as BABYLON from 'babylonjs';
+
+import {GameEvent, CombatEventsDispatcher} from './combat_events';
 
 
 let dragStarted:boolean = false;
@@ -94,7 +93,7 @@ const onCanvasPointerUp=(scene:BABYLON.Scene,camera:BABYLON.ArcRotateCamera,
         if(pickInfo!=null && 
             pickInfo.pickedMesh?.id !== ground.id && 
             pickInfo.pickedMesh!=null){
-            OnAttackTargetChosen.notifyObservers(new GameEvent(scene,camera,startingMesh,(pickInfo.pickedMesh as BABYLON.Mesh)));
+            CombatEventsDispatcher().notifyObservers(new GameEvent(scene,camera,startingMesh,(pickInfo.pickedMesh as BABYLON.Mesh)));
         }
          
     }
@@ -127,11 +126,11 @@ export const createLevel = function (scene:BABYLON.Scene,camera:BABYLON.ArcRotat
 
     // Ground
     ground = BABYLON.Mesh.CreateGround("ground", 1000, 1000, 1, scene, false);
-    let groundTexture = new BABYLON.Texture(grid_png, scene);
+    //let groundTexture = new BABYLON.Texture(grid_png, scene);
     groundMaterial = new BABYLON.StandardMaterial("ground", scene);
     //groundMaterial.specularColor = BABYLON.Color3.Black();
-    groundTexture.hasAlpha = true;
-    groundMaterial.diffuseTexture = groundTexture;
+    //groundTexture.hasAlpha = true;
+    //groundMaterial.diffuseTexture = groundTexture;
     groundMaterial.alpha = 0.5;
     groundMaterial.useAlphaFromDiffuseTexture = true;
     ground.material = groundMaterial;
